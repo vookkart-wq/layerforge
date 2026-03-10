@@ -6,10 +6,9 @@ import { toast } from 'sonner';
 
 interface ProjectsDashboardProps {
     onSelectProject: (id: string) => void;
-    onNewProject: () => void;
 }
 
-export function ProjectsDashboard({ onSelectProject, onNewProject }: ProjectsDashboardProps) {
+export function ProjectsDashboard({ onSelectProject }: ProjectsDashboardProps) {
     const { projects, isLoading, deleteProject } = useProjects();
 
     const handleDelete = async (e: React.MouseEvent, project: Project) => {
@@ -31,60 +30,46 @@ export function ProjectsDashboard({ onSelectProject, onNewProject }: ProjectsDas
         );
     }
 
+    if (!projects || projects.length === 0) {
+        return null;
+    }
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold">Your Workspaces</h3>
-            </div>
+        <div className="space-y-4">
+            <h3 className="text-xl font-semibold px-1">Recent Workspaces</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* New Project Card */}
-                <button
-                    onClick={onNewProject}
-                    className="group relative h-40 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted bg-transparent hover:bg-muted/50 hover:border-primary/50 transition-all text-muted-foreground hover:text-foreground"
-                >
-                    <div className="p-3 rounded-full bg-background shadow-sm group-hover:scale-110 transition-transform text-primary">
-                        <Plus className="w-6 h-6" />
-                    </div>
-                    <span className="font-medium">New Project</span>
-                </button>
-
-                {/* Existing Projects */}
+            <div className="flex flex-col gap-2">
                 {projects.map((project) => (
                     <div
                         key={project.id}
                         onClick={() => onSelectProject(project.id)}
-                        className="group relative h-40 flex flex-col justify-between p-5 rounded-xl border bg-card hover:border-primary/50 hover:shadow-md cursor-pointer transition-all overflow-hidden"
+                        className="group flex items-center justify-between p-4 rounded-xl border bg-card hover:border-primary/50 hover:bg-accent/30 cursor-pointer transition-all"
                     >
-                        {/* Background decoration */}
-                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none" />
-
-                        <div className="flex items-start justify-between relative z-10 gap-2">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                                    <FileSpreadsheet className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <h4 className="font-semibold truncate pr-2" title={project.name}>
-                                        {project.name}
-                                    </h4>
-                                </div>
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                                <FileSpreadsheet className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <h4 className="font-semibold text-base truncate pr-4" title={project.name}>
+                                    {project.name}
+                                </h4>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-muted-foreground relative z-10">
-                            <div className="flex items-center gap-1.5 text-xs">
-                                <Clock className="w-3.5 h-3.5" />
-                                <span>Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
+                        <div className="flex items-center gap-6 shrink-0">
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <Clock className="w-4 h-4" />
+                                <span>{formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
                             </div>
+
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10 -mb-1 -mr-1 shrink-0"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10 -my-2 -mr-2"
                                 onClick={(e) => handleDelete(e, project)}
                                 title="Delete project"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-5 h-5" />
                             </Button>
                         </div>
                     </div>

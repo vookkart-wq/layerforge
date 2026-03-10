@@ -32,7 +32,6 @@ function App() {
 
   // Dashboard & Workspace states
   const [showDashboard, setShowDashboard] = useState(true);
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
 
   // Initialize background sync to Supabase
@@ -60,9 +59,9 @@ function App() {
 
   // Handle intercepting the CSV Uploader specifically when starting a new project
   useEffect(() => {
-    // If we were creating new, and CSV just loaded, we must create a Supabase project first
+    // If we were on the dashboard, and CSV just loaded, we must create a Supabase project first
     const createProjectFromCSV = async () => {
-      if (isCreatingNew && csvLoaded && !currentProjectId && user) {
+      if (showDashboard && csvLoaded && !currentProjectId && user) {
         try {
           const { data, error } = await supabase
             .from('projects')
@@ -80,7 +79,6 @@ function App() {
 
           if (data) {
             setCurrentProjectId(data.id);
-            setIsCreatingNew(false);
             setShowDashboard(false);
           }
         } catch (e: any) {
@@ -90,14 +88,13 @@ function App() {
           } else {
             toast.error('Failed to save new project to cloud.');
           }
-          setIsCreatingNew(false);
           useCSVStore.getState().clearCSVData();
         }
       }
     };
 
     createProjectFromCSV();
-  }, [csvLoaded, isCreatingNew, currentProjectId, user, csvData, csvHeaders, csvFileName]);
+  }, [csvLoaded, showDashboard, currentProjectId, user, csvData, csvHeaders, csvFileName]);
 
   // Auto-open Properties panel when a layer is selected
   useEffect(() => {
@@ -165,7 +162,6 @@ function App() {
       setCSVData(data, headers);
       setCurrentProjectId(projectData.id);
       setShowDashboard(false);
-      setIsCreatingNew(false);
 
       toast.success('Created new blank workspace');
     } catch (e) {
@@ -178,14 +174,6 @@ function App() {
     // Setting this ID triggers the useWorkspaceSync hook to download the state
     setCurrentProjectId(projectId);
     setShowDashboard(false);
-  };
-
-  const handleNewProject = () => {
-    setIsCreatingNew(true);
-    setShowDashboard(false);
-    // Clear out any old CSV state so the uploader shows
-    useCSVStore.getState().clearCSVData();
-    setCurrentProjectId(null);
   };
 
   const handleReturnToDashboard = () => {
@@ -236,43 +224,26 @@ function App() {
         </header>
 
         <div className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-12 max-w-5xl">
-            {showDashboard && !isCreatingNew ? (
-              <ProjectsDashboard
-                onSelectProject={handleSelectProject}
-                onNewProject={handleNewProject}
-              />
-            ) : (
-              <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex items-center gap-4 mb-8">
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setIsCreatingNew(false);
-                    setShowDashboard(true);
-                  }}>
-                    ← Back to Workspaces
-                  </Button>
-                  <h2 className="text-2xl font-semibold">Create New Workspace</h2>
-                </div>
+          <div className="container mx-auto px-4 py-12 max-w-4xl space-y-12">
 
-                <CSVUploader />
-
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative w-full max-w-sm">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Or start from scratch</span>
-                    </div>
-                  </div>
-
-                  <Button variant="outline" size="lg" className="gap-2" onClick={handleStartEmpty}>
-                    <Table className="w-4 h-4" />
-                    Start with Empty Sheet
-                  </Button>
-                </div>
+            {/* Top Section: Quick Start (Uploader & Scratch Button) */}
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold">Start New Workspace</h2>
+                <Button variant="outline" className="gap-2" onClick={handleStartEmpty}>
+                  <Table className="w-4 h-4" />
+                  Empty Canvas
+                </Button>
               </div>
-            )}
+
+              <CSVUploader />
+            </div>
+
+            {/* Bottom Section: Recent Projects List */}
+            <div className="animate-in fade-in slide-in-from-bottom-8">
+              <ProjectsDashboard onSelectProject={handleSelectProject} />
+            </div>
+
           </div>
         </div>
       </div>
