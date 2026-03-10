@@ -152,8 +152,8 @@ export function clearReoonSettings() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
-// API Base URL - goes through Vite proxy to avoid CORS
-const API_BASE = '/api/reoon';
+// API Base URL - direct API call (Reoon API supports CORS)
+const API_BASE = 'https://emailverifier.reoon.com/api/v1';
 
 // Check account balance
 export async function checkAccountBalance(): Promise<ReoonAccountBalance> {
