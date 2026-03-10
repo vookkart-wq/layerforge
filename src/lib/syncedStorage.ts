@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 const SYNCED_KEYS = [
     'layerforge_ai_settings',
     'layerforge_ai_api_keys',
+    'layerforge_ai_columns',
     'layerforge_prompt_templates',
     'layerforge_cloudinary_settings',
     'layerforge_templates',

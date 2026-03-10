@@ -49,7 +49,7 @@ const aiColumnConfigs = new Map<string, AIColumnConfig>();
 // Load AI column configs from localStorage on startup
 function loadAIColumnConfigs() {
     try {
-        const saved = localStorage.getItem(AI_COLUMNS_STORAGE_KEY);
+        const saved = getSyncedItem(AI_COLUMNS_STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved) as Array<[string, { columnName: string; prompt: string; processedRows: number[]; createdAt: string }]>;
             parsed.forEach(([key, config]) => {
@@ -77,7 +77,7 @@ function saveAIColumnConfigs() {
                 createdAt: config.createdAt.toISOString()
             }
         ]);
-        localStorage.setItem(AI_COLUMNS_STORAGE_KEY, JSON.stringify(serializable));
+        setSyncedItem(AI_COLUMNS_STORAGE_KEY, JSON.stringify(serializable));
     } catch { /* ignore storage errors */ }
 }
 
