@@ -499,7 +499,7 @@ export function clearApifySettings() {
 }
 
 // API Base URL - goes through Vite proxy to avoid CORS
-const API_BASE = '/api/apify/v2';
+const API_BASE = 'https://api.apify.com/v2';
 
 interface ApifyRunResult {
     id: string;

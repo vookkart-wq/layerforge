@@ -30,13 +30,12 @@ const DEFAULT_MODELS: Record<AIProvider, string> = {
     local: 'local-model'
 };
 
-// API endpoints - Use proxy for CORS-blocked APIs in dev mode
-// Gemini and Groq work directly, others go through Vite proxy
+// API endpoints - direct URLs for production (Vercel has no Vite proxy)
 const API_ENDPOINTS: Record<AIProvider, string> = {
     gemini: 'https://generativelanguage.googleapis.com/v1beta/models',
-    openai: '/api/openai/v1/chat/completions',
-    claude: '/api/claude/v1/messages',
-    deepseek: '/api/deepseek/v1/chat/completions',
+    openai: 'https://api.openai.com/v1/chat/completions',
+    claude: 'https://api.anthropic.com/v1/messages',
+    deepseek: 'https://api.deepseek.com/v1/chat/completions',
     groq: 'https://api.groq.com/openai/v1/chat/completions',
     deepinfra: 'https://api.deepinfra.com/v1/openai/chat/completions',
     openrouter: 'https://openrouter.ai/api/v1/chat/completions',

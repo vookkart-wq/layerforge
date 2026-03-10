@@ -1,7 +1,7 @@
 // Success.ai API Service
 // API Documentation: https://api.success.ai/api/docs
 
-const API_BASE = '/api/successai';
+const API_BASE = 'https://api.success.ai';
 const CAMPAIGNS_CACHE_KEY = 'successai_campaigns_cache';
 const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
