@@ -11,6 +11,7 @@ interface CSVSnapshot {
 interface CSVState {
     data: CSVRow[];
     headers: string[];
+    fileName: string;
     isLoaded: boolean;
     readyForEditor: boolean;
 
@@ -25,7 +26,7 @@ interface CSVState {
     canRedo: boolean;
 
     // Actions
-    setCSVData: (data: CSVRow[], headers: string[]) => void;
+    setCSVData: (data: CSVRow[], headers: string[], fileName?: string) => void;
     clearCSVData: () => void;
     proceedToEditor: () => void;
     goBackToCSVEditor: () => void;
@@ -118,6 +119,7 @@ export const useCSVStore = create<CSVState>()(
         (set, get) => ({
             data: [],
             headers: [],
+            fileName: 'Imported CSV',
             isLoaded: false,
             readyForEditor: false,
             sortColumn: null,
@@ -144,11 +146,12 @@ export const useCSVStore = create<CSVState>()(
                 return indices;
             },
 
-            setCSVData: (data, headers) => {
+            setCSVData: (data, headers, fileName = 'Imported CSV') => {
                 const snapshot: CSVSnapshot = { data: JSON.parse(JSON.stringify(data)), headers: [...headers] };
                 set({
                     data,
                     headers,
+                    fileName,
                     isLoaded: true,
                     readyForEditor: false,
                     history: [snapshot],
@@ -161,6 +164,7 @@ export const useCSVStore = create<CSVState>()(
             clearCSVData: () => set({
                 data: [],
                 headers: [],
+                fileName: 'Imported CSV',
                 isLoaded: false,
                 readyForEditor: false,
                 history: [],
@@ -547,6 +551,7 @@ export const useCSVStore = create<CSVState>()(
             partialize: (state) => ({
                 data: state.data,
                 headers: state.headers,
+                fileName: state.fileName,
                 isLoaded: state.isLoaded,
                 readyForEditor: state.readyForEditor,
                 sortColumn: state.sortColumn,

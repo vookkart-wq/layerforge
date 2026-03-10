@@ -27,7 +27,7 @@ export function CSVUploader() {
                 }
 
                 const csvHeaders = Object.keys(results.data[0] as object);
-                setCSVData(results.data as Record<string, string>[], csvHeaders);
+                setCSVData(results.data as Record<string, string>[], csvHeaders, source);
                 toast.success(`Loaded ${results.data.length} rows from ${source}`);
             },
             error: (error: Error) => {
@@ -51,7 +51,7 @@ export function CSVUploader() {
                 }
 
                 const csvHeaders = Object.keys(results.data[0] as object);
-                setCSVData(results.data as Record<string, string>[], csvHeaders);
+                setCSVData(results.data as Record<string, string>[], csvHeaders, file.name);
                 toast.success(`Loaded ${results.data.length} rows with ${csvHeaders.length} columns`);
             },
             error: (error) => {

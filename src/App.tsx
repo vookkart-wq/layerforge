@@ -44,6 +44,7 @@ function App() {
   const setCSVData = useCSVStore((s) => s.setCSVData);
   const csvHeaders = useCSVStore((s) => s.headers);
   const csvData = useCSVStore((s) => s.data);
+  const csvFileName = useCSVStore((s) => s.fileName);
   const loadStoredFonts = useFontStore((s) => s.loadStoredFonts);
 
   // Layer store for undo
@@ -67,9 +68,9 @@ function App() {
             .from('projects')
             .insert({
               user_id: user.id,
-              name: `Imported CSV - ${new Date().toLocaleDateString()}`,
+              name: csvFileName,
               state: {
-                csv: { data: csvData, headers: csvHeaders }
+                csv: { data: csvData, headers: csvHeaders, fileName: csvFileName }
               }
             })
             .select('id')
@@ -96,7 +97,7 @@ function App() {
     };
 
     createProjectFromCSV();
-  }, [csvLoaded, isCreatingNew, currentProjectId, user, csvData, csvHeaders]);
+  }, [csvLoaded, isCreatingNew, currentProjectId, user, csvData, csvHeaders, csvFileName]);
 
   // Auto-open Properties panel when a layer is selected
   useEffect(() => {
@@ -152,7 +153,7 @@ function App() {
           user_id: user.id,
           name: `Blank Project - ${new Date().toLocaleDateString()}`,
           state: {
-            csv: { data, headers }
+            csv: { data, headers, fileName: 'Blank Project' }
           }
         })
         .select('id')
