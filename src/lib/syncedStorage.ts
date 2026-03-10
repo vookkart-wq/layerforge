@@ -9,7 +9,15 @@ const SYNCED_KEYS = [
     'layerforge_cloudinary_settings',
     'layerforge_templates',
     'cloudinary_cloud_name',
-    'cloudinary_upload_preset'
+    'cloudinary_upload_preset',
+    'layerforge_reoon_settings',
+    'layerforge_apify_settings',
+    'apify_custom_presets',
+    'successai_api_key',
+    'successai_key_validated',
+    'successai_workspace_name',
+    'smartlead_api_key',
+    'smartlead_key_validated'
 ];
 
 let _userId: string | null = null;

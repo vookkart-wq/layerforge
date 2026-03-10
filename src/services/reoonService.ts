@@ -1,6 +1,7 @@
 // Reoon Email Verifier Service
 // Integrates with Reoon API for email verification
 // Supports both single verification and bulk verification APIs
+import { getSyncedItem, setSyncedItem, removeSyncedItem } from '@/lib/syncedStorage';
 
 export interface ReoonSettings {
     apiKey: string;
@@ -124,7 +125,7 @@ let currentSettings: ReoonSettings = {
 
 export function loadReoonSettings(): ReoonSettings {
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = getSyncedItem(STORAGE_KEY);
         if (saved) {
             currentSettings = JSON.parse(saved);
         }
@@ -137,7 +138,7 @@ export function loadReoonSettings(): ReoonSettings {
 export function saveReoonSettings(settings: Partial<ReoonSettings>) {
     currentSettings = { ...currentSettings, ...settings };
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentSettings));
+        setSyncedItem(STORAGE_KEY, JSON.stringify(currentSettings));
     } catch (e) {
         console.error('Failed to save Reoon settings:', e);
     }
@@ -149,7 +150,7 @@ export function getReoonSettings(): ReoonSettings {
 
 export function clearReoonSettings() {
     currentSettings = { apiKey: '', verificationMode: 'power' };
-    localStorage.removeItem(STORAGE_KEY);
+    removeSyncedItem(STORAGE_KEY);
 }
 
 // API Base URL - direct API call (Reoon API supports CORS)

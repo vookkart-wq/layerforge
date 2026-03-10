@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { getSyncedItem, setSyncedItem, removeSyncedItem } from '@/lib/syncedStorage';
 
 // Smartlead API Service
 // API Documentation: https://api.smartlead.ai/reference/welcome
@@ -10,18 +11,18 @@ const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 // Settings persistence
 export function getSmartleadSettings() {
     return {
-        apiKey: localStorage.getItem('smartlead_api_key') || '',
-        isValidated: localStorage.getItem('smartlead_key_validated') === 'true',
+        apiKey: getSyncedItem('smartlead_api_key') || '',
+        isValidated: getSyncedItem('smartlead_key_validated') === 'true',
     };
 }
 
 export function saveSmartleadSettings(apiKey: string) {
-    localStorage.setItem('smartlead_api_key', apiKey);
-    localStorage.setItem('smartlead_key_validated', 'true');
+    setSyncedItem('smartlead_api_key', apiKey);
+    setSyncedItem('smartlead_key_validated', 'true');
 }
 
 export function clearSmartleadValidation() {
-    localStorage.removeItem('smartlead_key_validated');
+    removeSyncedItem('smartlead_key_validated');
     clearCampaignCache();
 }
 

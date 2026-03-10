@@ -1,5 +1,6 @@
 // Apify Scraper Service
 // Integrates with Apify API to run actors and fetch results
+import { getSyncedItem, setSyncedItem, removeSyncedItem } from '@/lib/syncedStorage';
 
 export interface ApifySettings {
     apiToken: string;
@@ -470,7 +471,7 @@ let currentSettings: ApifySettings = {
 
 export function loadApifySettings(): ApifySettings {
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = getSyncedItem(STORAGE_KEY);
         if (saved) {
             currentSettings = JSON.parse(saved);
         }
@@ -483,7 +484,7 @@ export function loadApifySettings(): ApifySettings {
 export function saveApifySettings(settings: Partial<ApifySettings>) {
     currentSettings = { ...currentSettings, ...settings };
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentSettings));
+        setSyncedItem(STORAGE_KEY, JSON.stringify(currentSettings));
     } catch (e) {
         console.error('Failed to save Apify settings:', e);
     }
@@ -495,7 +496,7 @@ export function getApifySettings(): ApifySettings {
 
 export function clearApifySettings() {
     currentSettings = { apiToken: '' };
-    localStorage.removeItem(STORAGE_KEY);
+    removeSyncedItem(STORAGE_KEY);
 }
 
 // API Base URL - goes through Vite proxy to avoid CORS
@@ -658,7 +659,7 @@ const CUSTOM_PRESETS_KEY = 'layerforge_custom_apify_presets';
 
 export function loadCustomPresets(): CustomActorPreset[] {
     try {
-        const saved = localStorage.getItem(CUSTOM_PRESETS_KEY);
+        const saved = getSyncedItem(CUSTOM_PRESETS_KEY);
         return saved ? JSON.parse(saved) : [];
     } catch {
         return [];
@@ -673,12 +674,12 @@ export function saveCustomPreset(preset: CustomActorPreset): void {
     } else {
         presets.push(preset);
     }
-    localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(presets));
+    setSyncedItem(CUSTOM_PRESETS_KEY, JSON.stringify(presets));
 }
 
 export function deleteCustomPreset(id: string): void {
     const presets = loadCustomPresets().filter(p => p.id !== id);
-    localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(presets));
+    setSyncedItem(CUSTOM_PRESETS_KEY, JSON.stringify(presets));
 }
 
 export function getAllPresets(): (ApifyActorPreset & { isCustom?: true })[] {

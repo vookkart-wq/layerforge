@@ -1,5 +1,6 @@
 // Success.ai API Service
 // API Documentation: https://api.success.ai/api/docs
+import { getSyncedItem, setSyncedItem, removeSyncedItem } from '@/lib/syncedStorage';
 
 const API_BASE = 'https://api.success.ai';
 const CAMPAIGNS_CACHE_KEY = 'successai_campaigns_cache';
@@ -8,23 +9,23 @@ const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 // Settings persistence
 export function getSuccessAiSettings() {
     return {
-        apiKey: localStorage.getItem('successai_api_key') || '',
-        isValidated: localStorage.getItem('successai_key_validated') === 'true',
-        workspaceName: localStorage.getItem('successai_workspace_name') || ''
+        apiKey: getSyncedItem('successai_api_key') || '',
+        isValidated: getSyncedItem('successai_key_validated') === 'true',
+        workspaceName: getSyncedItem('successai_workspace_name') || ''
     };
 }
 
 export function saveSuccessAiSettings(apiKey: string, workspaceName?: string) {
-    localStorage.setItem('successai_api_key', apiKey);
+    setSyncedItem('successai_api_key', apiKey);
     if (workspaceName !== undefined) {
-        localStorage.setItem('successai_workspace_name', workspaceName);
-        localStorage.setItem('successai_key_validated', 'true');
+        setSyncedItem('successai_workspace_name', workspaceName);
+        setSyncedItem('successai_key_validated', 'true');
     }
 }
 
 export function clearSuccessAiValidation() {
-    localStorage.removeItem('successai_key_validated');
-    localStorage.removeItem('successai_workspace_name');
+    removeSyncedItem('successai_key_validated');
+    removeSyncedItem('successai_workspace_name');
     clearCampaignCache();
 }
 
