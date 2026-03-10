@@ -1,0 +1,286 @@
+@import "tailwindcss";
+
+/* Theme customization */
+@theme {
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+}
+
+/* Light theme (default) */
+:root {
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221.2 83.2% 53.3%);
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2 84% 4.9%);
+
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-foreground: hsl(210 40% 98%);
+
+  --secondary: hsl(210 40% 96.1%);
+  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+
+  --muted: hsl(210 40% 96.1%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+
+  --accent: hsl(210 40% 96.1%);
+  --accent-foreground: hsl(222.2 47.4% 11.2%);
+
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(210 40% 98%);
+
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2 84% 4.9%);
+
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2 84% 4.9%);
+
+  /* CSV editor specific */
+  --csv-header-bg: linear-gradient(135deg, hsl(222 47% 85%) 0%, hsl(210 40% 90%) 100%);
+  --csv-header-text: hsl(222 47% 25%);
+  --csv-header-border: hsl(222 47% 70%);
+  --csv-header-hover: linear-gradient(135deg, hsl(222 47% 80%) 0%, hsl(210 40% 85%) 100%);
+  --csv-header-selected: linear-gradient(135deg, hsl(221 83% 70%) 0%, hsl(221 83% 80%) 100%);
+  --csv-row-num-bg: linear-gradient(90deg, hsl(210 40% 92%) 0%, hsl(210 40% 95%) 100%);
+  --csv-row-num-text: hsl(215 16% 40%);
+  --csv-row-num-border: hsl(210 40% 80%);
+  --csv-row-num-hover: linear-gradient(90deg, hsl(210 40% 88%) 0%, hsl(210 40% 91%) 100%);
+  --csv-row-num-selected: linear-gradient(90deg, hsl(221 83% 70%) 0%, hsl(221 83% 80%) 100%);
+  --csv-cell-selected-bg: hsl(221 83% 95%);
+  --csv-cell-selected-outline: hsl(221 83% 53%);
+  --csv-thead-shadow: rgba(0, 0, 0, 0.1);
+  --csv-cell-bg: hsl(0 0% 100%);
+  --csv-cell-alt-bg: hsl(210 40% 98%);
+}
+
+/* Dark theme */
+.dark {
+  --border: hsl(217 33% 17%);
+  --input: hsl(217 33% 17%);
+  --ring: hsl(224 76% 48%);
+  --background: hsl(222 47% 6%);
+  --foreground: hsl(210 40% 98%);
+
+  --primary: hsl(217 91% 60%);
+  --primary-foreground: hsl(222 47% 6%);
+
+  --secondary: hsl(217 33% 14%);
+  --secondary-foreground: hsl(210 40% 98%);
+
+  --muted: hsl(217 33% 14%);
+  --muted-foreground: hsl(215 20% 55%);
+
+  --accent: hsl(217 33% 17%);
+  --accent-foreground: hsl(210 40% 98%);
+
+  --destructive: hsl(0 63% 51%);
+  --destructive-foreground: hsl(210 40% 98%);
+
+  --popover: hsl(222 47% 8%);
+  --popover-foreground: hsl(210 40% 98%);
+
+  --card: hsl(222 47% 8%);
+  --card-foreground: hsl(210 40% 98%);
+
+  /* CSV editor specific - dark */
+  --csv-header-bg: linear-gradient(135deg, hsl(222 40% 16%) 0%, hsl(217 33% 18%) 100%);
+  --csv-header-text: hsl(210 40% 85%);
+  --csv-header-border: hsl(217 33% 25%);
+  --csv-header-hover: linear-gradient(135deg, hsl(222 40% 20%) 0%, hsl(217 33% 22%) 100%);
+  --csv-header-selected: linear-gradient(135deg, hsl(221 83% 35%) 0%, hsl(221 83% 45%) 100%);
+  --csv-row-num-bg: linear-gradient(90deg, hsl(222 40% 10%) 0%, hsl(217 33% 12%) 100%);
+  --csv-row-num-text: hsl(215 20% 55%);
+  --csv-row-num-border: hsl(217 33% 20%);
+  --csv-row-num-hover: linear-gradient(90deg, hsl(222 40% 14%) 0%, hsl(217 33% 16%) 100%);
+  --csv-row-num-selected: linear-gradient(90deg, hsl(221 83% 30%) 0%, hsl(221 83% 40%) 100%);
+  --csv-cell-selected-bg: hsl(221 60% 15%);
+  --csv-cell-selected-outline: hsl(217 91% 60%);
+  --csv-thead-shadow: rgba(0, 0, 0, 0.4);
+  --csv-cell-bg: hsl(222 47% 8%);
+  --csv-cell-alt-bg: hsl(222 40% 10%);
+}
+
+/* Base styles */
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted-foreground) 50%, transparent);
+}
+
+/* Canvas checkerboard background */
+.canvas-container {
+  background: repeating-conic-gradient(#e5e7eb 0% 25%, #f3f4f6 0% 50%) 50% / 20px 20px;
+}
+
+.dark .canvas-container {
+  background: repeating-conic-gradient(hsl(217 33% 15%) 0% 25%, hsl(222 47% 10%) 0% 50%) 50% / 20px 20px;
+}
+
+/* React Data Grid Styling */
+.rdg {
+  --rdg-header-background-color: var(--muted);
+  --rdg-background-color: var(--background);
+  --rdg-row-hover-background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  --rdg-selection-color: var(--primary);
+  --rdg-border-color: var(--border);
+  --rdg-font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.rdg-header-row {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.rdg-cell {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.rdg-header-sort-cell {
+  cursor: pointer;
+}
+
+.rdg-header-sort-cell:hover {
+  background-color: color-mix(in srgb, var(--muted) 80%, var(--accent));
+}
+
+/* Column resize handle */
+.rdg-cell-resizable::after {
+  width: 4px !important;
+  background-color: transparent;
+}
+
+.rdg-cell-resizable:hover::after {
+  background-color: var(--primary);
+}
+
+/* Selected cell */
+.rdg-cell[aria-selected="true"] {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+/* Editor input */
+.rdg-text-editor {
+  appearance: none;
+  background-color: var(--background);
+  border: 2px solid var(--primary);
+  font-size: inherit;
+  padding: 0 6px;
+}
+
+/* CSV Editor Table Styles */
+.csv-editor-header {
+  background: var(--csv-header-bg);
+  color: var(--csv-header-text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--csv-header-border);
+}
+
+.csv-editor-header:hover {
+  background: var(--csv-header-hover);
+}
+
+.csv-editor-header.selected {
+  background: var(--csv-header-selected);
+  color: white;
+}
+
+.csv-editor-row-num {
+  background: var(--csv-row-num-bg);
+  color: var(--csv-row-num-text);
+  font-weight: 500;
+  border-right: 2px solid var(--csv-row-num-border);
+}
+
+.csv-editor-row-num:hover {
+  background: var(--csv-row-num-hover);
+}
+
+.csv-editor-row-num.selected {
+  background: var(--csv-row-num-selected);
+  color: white;
+}
+
+/* Sticky header shadow */
+.csv-editor-thead {
+  box-shadow: 0 2px 4px var(--csv-thead-shadow);
+}
+
+/* Cell selected state */
+.csv-cell-selected {
+  background-color: var(--csv-cell-selected-bg);
+  outline: 2px solid var(--csv-cell-selected-outline);
+  outline-offset: -2px;
+}
+
+/* Toast notifications - ensure visibility */
+[data-sonner-toast] {
+  background-color: hsl(222 47% 20%) !important;
+  color: white !important;
+  border: 1px solid hsl(222 47% 30%) !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  background-color: hsl(142 71% 35%) !important;
+  border-color: hsl(142 71% 25%) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background-color: hsl(0 84% 50%) !important;
+  border-color: hsl(0 84% 40%) !important;
+}
