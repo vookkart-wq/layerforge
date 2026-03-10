@@ -771,7 +771,6 @@ export function CSVEditorPage({ onReturnToDashboard }: { onReturnToDashboard?: (
                             ← Dashboard
                         </Button>
                     )}
-                    <Button variant="ghost" size="sm" onClick={handleNewProject} title="Start fresh with a new CSV"><ArrowLeft className="w-4 h-4 mr-1" />New CSV</Button>
                     <Button onClick={proceedToEditor}>Continue to Canvas<ArrowRight className="w-4 h-4 ml-2" /></Button>
                 </div>
             </header>
