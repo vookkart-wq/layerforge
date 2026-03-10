@@ -59,13 +59,13 @@ export function ProjectsDashboard({ onSelectProject, onNewProject }: ProjectsDas
                         {/* Background decoration */}
                         <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none" />
 
-                        <div className="flex items-start justify-between relative z-10">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        <div className="flex items-start justify-between relative z-10 gap-2">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
                                     <FileSpreadsheet className="w-5 h-5" />
                                 </div>
-                                <div>
-                                    <h4 className="font-semibold line-clamp-1 truncate pr-8" title={project.name}>
+                                <div className="min-w-0 flex-1">
+                                    <h4 className="font-semibold truncate pr-2" title={project.name}>
                                         {project.name}
                                     </h4>
                                 </div>
@@ -74,7 +74,7 @@ export function ProjectsDashboard({ onSelectProject, onNewProject }: ProjectsDas
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 -mt-1 -mr-1"
+                                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 -mt-1 -mr-1"
                                 onClick={(e) => handleDelete(e, project)}
                                 title="Delete project"
                             >
