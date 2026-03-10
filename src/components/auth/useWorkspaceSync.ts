@@ -90,6 +90,19 @@ export function useWorkspaceSync(projectId: string | null) {
                     layers: { layers }
                 };
 
+                // Guard: check payload size before sending to Supabase
+                // Supabase has a ~5MB limit for single-row JSON payloads
+                const payloadSize = new Blob([JSON.stringify(fullState)]).size;
+                const MAX_PAYLOAD = 4.5 * 1024 * 1024; // 4.5 MB safety margin
+
+                if (payloadSize > MAX_PAYLOAD) {
+                    console.warn(
+                        `Auto-save skipped: payload too large (${(payloadSize / 1024 / 1024).toFixed(1)}MB). ` +
+                        `Max allowed: ${(MAX_PAYLOAD / 1024 / 1024).toFixed(1)}MB.`
+                    );
+                    return;
+                }
+
                 const { error } = await supabase
                     .from('projects')
                     .update({

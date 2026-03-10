@@ -24,6 +24,7 @@ import { LoginScreen } from '@/components/auth/LoginScreen';
 import { ProjectsDashboard } from '@/components/auth/ProjectsDashboard';
 import { useWorkspaceSync } from '@/components/auth/useWorkspaceSync';
 import { useGlobalSettingsSync } from '@/components/auth/useGlobalSettingsSync';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { supabase } from '@/lib/supabase';
 
 function App() {
@@ -38,13 +39,26 @@ function App() {
   useWorkspaceSync(currentProjectId);
   useGlobalSettingsSync();
 
-  const csvLoaded = useCSVStore((s) => s.isLoaded);
   const readyForEditor = useCSVStore((s) => s.readyForEditor);
   const setCSVData = useCSVStore((s) => s.setCSVData);
-  const csvHeaders = useCSVStore((s) => s.headers);
-  const csvData = useCSVStore((s) => s.data);
-  const csvFileName = useCSVStore((s) => s.fileName);
   const loadStoredFonts = useFontStore((s) => s.loadStoredFonts);
+
+  // Clear stale CSV state from localStorage when on the dashboard
+  // This prevents ghost state from lingering across page refreshes
+  useEffect(() => {
+    if (showDashboard && !currentProjectId) {
+      const stored = localStorage.getItem('csv-editor-storage');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed?.state?.isLoaded) {
+            // Stale state detected — clear it
+            useCSVStore.getState().clearCSVData();
+          }
+        } catch { /* ignore parse errors */ }
+      }
+    }
+  }, [showDashboard, currentProjectId]);
 
   // Layer store for undo
   const { selectedLayerId, undo, redo, canUndo, canRedo } = useLayerStore();
@@ -57,44 +71,42 @@ function App() {
     loadStoredFonts();
   }, [loadStoredFonts]);
 
-  // Handle intercepting the CSV Uploader specifically when starting a new project
-  useEffect(() => {
-    // If we were on the dashboard, and CSV just loaded, we must create a Supabase project first
-    const createProjectFromCSV = async () => {
-      if (showDashboard && csvLoaded && !currentProjectId && user) {
-        try {
-          const { data, error } = await supabase
-            .from('projects')
-            .insert({
-              user_id: user.id,
-              name: csvFileName,
-              state: {
-                csv: { data: csvData, headers: csvHeaders, fileName: csvFileName }
-              }
-            })
-            .select('id')
-            .single();
+  // Remove the dangerous auto-creation useEffect
+  // Project creation is now handled explicitly by the handleCSVUpload callback
 
-          if (error) throw error;
+  const handleCSVUpload = async (uploadData: any[], uploadHeaders: string[], uploadFileName: string) => {
+    if (!user) return;
+    try {
+      // 1. Save directly to Supabase to create the workspace
+      const { data: newProject, error } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user.id,
+          name: uploadFileName,
+          state: {
+            csv: { data: uploadData, headers: uploadHeaders, fileName: uploadFileName }
+          }
+        })
+        .select('id')
+        .single();
 
-          if (data) {
-            setCurrentProjectId(data.id);
-            setShowDashboard(false);
-          }
-        } catch (e: any) {
-          console.error('Failed to create project:', e);
-          if (e.message?.includes('payload') || e.code === '413') {
-            toast.error('File too large to save to cloud. Try a smaller file.');
-          } else {
-            toast.error('Failed to save new project to cloud.');
-          }
-          useCSVStore.getState().clearCSVData();
-        }
+      if (error) throw error;
+
+      if (newProject) {
+        // 2. Load into global state ONLY after successful cloud creation
+        setCSVData(uploadData, uploadHeaders, uploadFileName);
+        setCurrentProjectId(newProject.id);
+        setShowDashboard(false);
       }
-    };
-
-    createProjectFromCSV();
-  }, [csvLoaded, showDashboard, currentProjectId, user, csvData, csvHeaders, csvFileName]);
+    } catch (e: any) {
+      console.error('Failed to create project:', e);
+      if (e.message?.includes('payload') || e.code === '413') {
+        toast.error('File too large to save to cloud. Maximum size is ~5MB.');
+      } else {
+        toast.error('Failed to save new project to cloud.');
+      }
+    }
+  };
 
   // Auto-open Properties panel when a layer is selected
   useEffect(() => {
@@ -236,7 +248,7 @@ function App() {
                 </Button>
               </div>
 
-              <CSVUploader />
+              <CSVUploader onUploadSuccess={handleCSVUpload} />
             </div>
 
             {/* Bottom Section: Recent Projects List */}
@@ -264,119 +276,121 @@ function App() {
 
   // State 3: Ready for canvas editor
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-accent/10">
-      <Toaster />
+    <ErrorBoundary onReset={handleReturnToDashboard}>
+      <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-accent/10">
+        <Toaster />
 
-      <Tabs defaultValue="editor" className="flex-1 flex flex-col min-h-0">
-        {/* Header with Tabs */}
-        <header className="flex-shrink-0 border-b bg-background/95 backdrop-blur z-50">
-          <div className="px-4 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handleReturnToDashboard} className="mr-2 h-8 px-2">
-                ← Home
-              </Button>
-              <Layers className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent hidden sm:block">
-                LayerForge
-              </h1>
+        <Tabs defaultValue="editor" className="flex-1 flex flex-col min-h-0">
+          {/* Header with Tabs */}
+          <header className="flex-shrink-0 border-b bg-background/95 backdrop-blur z-50">
+            <div className="px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={handleReturnToDashboard} className="mr-2 h-8 px-2">
+                  ← Home
+                </Button>
+                <Layers className="w-6 h-6 text-primary" />
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent hidden sm:block">
+                  LayerForge
+                </h1>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Editor/Cloudinary Tabs */}
+                <TabsList className="h-8 bg-muted/50">
+                  <TabsTrigger value="editor" className="text-xs data-[state=active]:bg-background px-3">
+                    <Layers className="w-3 h-3 mr-1" />
+                    Editor
+                  </TabsTrigger>
+                  <TabsTrigger value="cloudinary" className="text-xs data-[state=active]:bg-background px-3">
+                    <Cloud className="w-3 h-3 mr-1" />
+                    Cloudinary
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="w-px h-6 bg-border" />
+
+                <TemplateManager />
+                <Button variant="outline" size="sm" onClick={() => useCSVStore.getState().goBackToCSVEditor()}>
+                  ← CSV
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Editor/Cloudinary Tabs */}
-              <TabsList className="h-8 bg-muted/50">
-                <TabsTrigger value="editor" className="text-xs data-[state=active]:bg-background px-3">
-                  <Layers className="w-3 h-3 mr-1" />
-                  Editor
-                </TabsTrigger>
-                <TabsTrigger value="cloudinary" className="text-xs data-[state=active]:bg-background px-3">
-                  <Cloud className="w-3 h-3 mr-1" />
-                  Cloudinary
-                </TabsTrigger>
-              </TabsList>
+          </header>
 
-              <div className="w-px h-6 bg-border" />
+          {/* Editor Tab */}
+          <TabsContent value="editor" className="flex-1 m-0 min-h-0">
+            <div className="h-full flex">
+              {/* Left: Canvas Preview */}
+              <div className="flex-1 min-w-0">
+                <CanvasPreview />
+              </div>
 
-              <TemplateManager />
-              <Button variant="outline" size="sm" onClick={() => useCSVStore.getState().goBackToCSVEditor()}>
-                ← CSV
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        {/* Editor Tab */}
-        <TabsContent value="editor" className="flex-1 m-0 min-h-0">
-          <div className="h-full flex">
-            {/* Left: Canvas Preview */}
-            <div className="flex-1 min-w-0">
-              <CanvasPreview />
-            </div>
-
-            {/* Right: Scrollable Panels */}
-            <div className="w-[380px] flex-shrink-0 border-l bg-background flex flex-col min-h-0">
-              <ScrollArea className="flex-1">
-                <div className="p-3 space-y-2">
-                  {/* Canvas & Grid Settings */}
-                  <details className="group" open>
-                    <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
-                      <span className="font-medium">🎨 Canvas & Grid</span>
-                      <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
-                    </summary>
-                    <div className="pt-2 space-y-4">
-                      <CanvasSettings />
-                      <div className="border-t pt-3">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Grid & Snap</p>
-                        <GridSettings />
+              {/* Right: Scrollable Panels */}
+              <div className="w-[380px] flex-shrink-0 border-l bg-background flex flex-col min-h-0">
+                <ScrollArea className="flex-1">
+                  <div className="p-3 space-y-2">
+                    {/* Canvas & Grid Settings */}
+                    <details className="group" open>
+                      <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
+                        <span className="font-medium">🎨 Canvas & Grid</span>
+                        <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
+                      </summary>
+                      <div className="pt-2 space-y-4">
+                        <CanvasSettings />
+                        <div className="border-t pt-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Grid & Snap</p>
+                          <GridSettings />
+                        </div>
                       </div>
-                    </div>
-                  </details>
+                    </details>
 
-                  {/* Layers */}
-                  <details className="group">
-                    <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
-                      <span className="font-medium">📚 Layers</span>
-                      <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
-                    </summary>
-                    <div className="pt-2">
-                      <LayerList onAddLayer={() => setShowAddLayerDialog(true)} />
-                    </div>
-                  </details>
+                    {/* Layers */}
+                    <details className="group">
+                      <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
+                        <span className="font-medium">📚 Layers</span>
+                        <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
+                      </summary>
+                      <div className="pt-2">
+                        <LayerList onAddLayer={() => setShowAddLayerDialog(true)} />
+                      </div>
+                    </details>
 
-                  {/* Properties */}
-                  <details className="group" ref={propertiesRef}>
-                    <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
-                      <span className="font-medium">⚙️ Properties</span>
-                      <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
-                    </summary>
-                    <div className="pt-2">
-                      <LayerProperties />
-                    </div>
-                  </details>
+                    {/* Properties */}
+                    <details className="group" ref={propertiesRef}>
+                      <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
+                        <span className="font-medium">⚙️ Properties</span>
+                        <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
+                      </summary>
+                      <div className="pt-2">
+                        <LayerProperties />
+                      </div>
+                    </details>
 
-                  {/* Output Settings */}
-                  <details className="group">
-                    <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
-                      <span className="font-medium">📤 Output</span>
-                      <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
-                    </summary>
-                    <div className="pt-2">
-                      <OutputSettings />
-                    </div>
-                  </details>
-                </div>
-              </ScrollArea>
+                    {/* Output Settings */}
+                    <details className="group">
+                      <summary className="flex items-center justify-between cursor-pointer p-2 bg-muted/50 rounded hover:bg-muted transition-colors text-sm">
+                        <span className="font-medium">📤 Output</span>
+                        <span className="text-xs group-open:rotate-90 transition-transform">▶</span>
+                      </summary>
+                      <div className="pt-2">
+                        <OutputSettings />
+                      </div>
+                    </details>
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
 
-        {/* Cloudinary Tab */}
-        <TabsContent value="cloudinary" className="flex-1 m-0 overflow-auto p-4">
-          <CloudinaryPanel />
-        </TabsContent>
-      </Tabs>
+          {/* Cloudinary Tab */}
+          <TabsContent value="cloudinary" className="flex-1 m-0 overflow-auto p-4">
+            <CloudinaryPanel />
+          </TabsContent>
+        </Tabs>
 
-      {/* Add Layer Dialog */}
-      <AddLayerDialog open={showAddLayerDialog} onOpenChange={setShowAddLayerDialog} />
-    </div>
+        {/* Add Layer Dialog */}
+        <AddLayerDialog open={showAddLayerDialog} onOpenChange={setShowAddLayerDialog} />
+      </div>
+    </ErrorBoundary>
   );
 }
 

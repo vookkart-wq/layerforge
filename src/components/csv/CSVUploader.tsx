@@ -9,11 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCSVStore } from '@/stores/useCSVStore';
 import { toast } from 'sonner';
 
-export function CSVUploader() {
+interface CSVUploaderProps {
+    onUploadSuccess?: (data: any[], headers: string[], fileName: string) => void;
+}
+
+export function CSVUploader({ onUploadSuccess }: CSVUploaderProps = {}) {
     const [isDragging, setIsDragging] = useState(false);
     const [sheetUrl, setSheetUrl] = useState('');
     const [loading, setLoading] = useState(false);
-    const { data, setCSVData } = useCSVStore();
+    const { setCSVData } = useCSVStore();
 
     // Parse CSV text and load into store
     const parseCSVText = useCallback((csvText: string, source: string) => {
@@ -27,7 +31,11 @@ export function CSVUploader() {
                 }
 
                 const csvHeaders = Object.keys(results.data[0] as object);
-                setCSVData(results.data as Record<string, string>[], csvHeaders, source);
+                if (onUploadSuccess) {
+                    onUploadSuccess(results.data, csvHeaders, source);
+                } else {
+                    setCSVData(results.data as Record<string, string>[], csvHeaders, source);
+                }
                 toast.success(`Loaded ${results.data.length} rows from ${source}`);
             },
             error: (error: Error) => {
@@ -51,7 +59,11 @@ export function CSVUploader() {
                 }
 
                 const csvHeaders = Object.keys(results.data[0] as object);
-                setCSVData(results.data as Record<string, string>[], csvHeaders, file.name);
+                if (onUploadSuccess) {
+                    onUploadSuccess(results.data, csvHeaders, file.name);
+                } else {
+                    setCSVData(results.data as Record<string, string>[], csvHeaders, file.name);
+                }
                 toast.success(`Loaded ${results.data.length} rows with ${csvHeaders.length} columns`);
             },
             error: (error) => {
