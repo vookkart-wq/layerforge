@@ -15,6 +15,7 @@ export function useWorkspaceSync(projectId: string | null) {
     const csvData = useCSVStore(s => s.data);
     const csvHeaders = useCSVStore(s => s.headers);
     const csvIsLoaded = useCSVStore(s => s.isLoaded);
+    const readyForEditor = useCSVStore(s => s.readyForEditor);
 
     const canvasConfig = useCanvasStore(s => s.canvasConfig);
     const outputConfig = useCanvasStore(s => s.outputConfig);
@@ -45,7 +46,7 @@ export function useWorkspaceSync(projectId: string | null) {
                             data: state.csv.data || [],
                             headers: state.csv.headers || [],
                             isLoaded: true,
-                            readyForEditor: true
+                            readyForEditor: state.csv.readyForEditor || false
                         });
                     }
 
@@ -84,7 +85,7 @@ export function useWorkspaceSync(projectId: string | null) {
         const saveState = async () => {
             try {
                 const fullState = {
-                    csv: { data: csvData, headers: csvHeaders },
+                    csv: { data: csvData, headers: csvHeaders, readyForEditor },
                     canvas: { canvasConfig, outputConfig },
                     layers: { layers }
                 };
@@ -107,7 +108,7 @@ export function useWorkspaceSync(projectId: string | null) {
         const timeoutId = setTimeout(saveState, 2000);
         return () => clearTimeout(timeoutId);
 
-    }, [projectId, csvData, csvHeaders, canvasConfig, outputConfig, layers, csvIsLoaded, isSyncing]);
+    }, [projectId, csvData, csvHeaders, readyForEditor, canvasConfig, outputConfig, layers, csvIsLoaded, isSyncing]);
 
     return { isSyncing };
 }

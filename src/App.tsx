@@ -82,9 +82,15 @@ function App() {
             setIsCreatingNew(false);
             setShowDashboard(false);
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Failed to create project:', e);
-          toast.error('Failed to save new project to cloud');
+          if (e.message?.includes('payload') || e.code === '413') {
+            toast.error('File too large to save to cloud. Try a smaller file.');
+          } else {
+            toast.error('Failed to save new project to cloud.');
+          }
+          setIsCreatingNew(false);
+          useCSVStore.getState().clearCSVData();
         }
       }
     };
@@ -275,17 +281,9 @@ function App() {
   if (!readyForEditor) {
     return (
       <div className="h-screen flex flex-col">
-        <header className="flex-shrink-0 border-b bg-background/95 backdrop-blur z-50">
-          <div className="px-4 py-2 flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={handleReturnToDashboard}>
-              ← Dashboard
-            </Button>
-            <ThemeToggle />
-          </div>
-        </header>
         <div className="flex-1 overflow-hidden relative">
           <Toaster />
-          <CSVEditorPage />
+          <CSVEditorPage onReturnToDashboard={handleReturnToDashboard} />
         </div>
       </div>
     );

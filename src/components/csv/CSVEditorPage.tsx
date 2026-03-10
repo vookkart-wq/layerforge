@@ -59,7 +59,7 @@ interface Selection {
     end: CellPosition;
 }
 
-export function CSVEditorPage() {
+export function CSVEditorPage({ onReturnToDashboard }: { onReturnToDashboard?: () => void }) {
     const {
         data, headers,
         updateCell, updateCells, addColumn, deleteColumn, deleteColumns, reorderColumns, renameColumn, addRow, deleteRow, deleteRows, addLogoColumn,
@@ -766,7 +766,12 @@ export function CSVEditorPage() {
                     <span className="text-sm text-muted-foreground">Data Editor • {data.length} × {headers.length}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={handleNewProject}><ArrowLeft className="w-4 h-4 mr-1" />New CSV</Button>
+                    {onReturnToDashboard && (
+                        <Button variant="ghost" size="sm" onClick={onReturnToDashboard}>
+                            ← Dashboard
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={handleNewProject} title="Start fresh with a new CSV"><ArrowLeft className="w-4 h-4 mr-1" />New CSV</Button>
                     <Button onClick={proceedToEditor}>Continue to Canvas<ArrowRight className="w-4 h-4 ml-2" /></Button>
                 </div>
             </header>
