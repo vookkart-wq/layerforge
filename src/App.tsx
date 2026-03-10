@@ -212,7 +212,8 @@ function App() {
   }
 
   // State 1: Dashboard or Uploader
-  if (!csvLoaded || showDashboard) {
+  // Always show Dashboard if showDashboard is explicitly true, OR if there's no project selected yet.
+  if (showDashboard || !currentProjectId) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-accent/10">
         <Toaster />
