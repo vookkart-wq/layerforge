@@ -20,7 +20,7 @@ export interface AIColumnConfig {
 
 // Default models for each provider
 const DEFAULT_MODELS: Record<AIProvider, string> = {
-    gemini: 'gemini-pro',
+    gemini: 'gemini-2.0-flash',
     openai: 'gpt-4o-mini',
     claude: 'claude-3-haiku-20240307',
     deepseek: 'deepseek-chat',
@@ -268,7 +268,7 @@ export function getAISettings(): AIProviderConfig {
 
 export function getAvailableModels(provider: AIProvider): string[] {
     const models: Record<AIProvider, string[]> = {
-        gemini: ['gemini-pro', 'gemini-2.0-flash-exp', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest'],
+        gemini: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-pro'],
         openai: ['gpt-5-nano', 'gpt-4o-mini', 'gpt-4o', 'o1-mini', 'o1-preview', 'gpt-4-turbo', 'gpt-3.5-turbo'],
         claude: ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229', 'claude-3-5-sonnet-20241022'],
         deepseek: ['deepseek-chat', 'deepseek-coder'],
