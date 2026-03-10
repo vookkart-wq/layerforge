@@ -70,21 +70,22 @@ export function ProjectsDashboard({ onSelectProject, onNewProject }: ProjectsDas
                                     </h4>
                                 </div>
                             </div>
+                        </div>
 
+                        <div className="flex items-center justify-between text-muted-foreground relative z-10">
+                            <div className="flex items-center gap-1.5 text-xs">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 -mt-1 -mr-1"
+                                className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10 -mb-1 -mr-1 shrink-0"
                                 onClick={(e) => handleDelete(e, project)}
                                 title="Delete project"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </Button>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground relative z-10">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
                         </div>
                     </div>
                 ))}
