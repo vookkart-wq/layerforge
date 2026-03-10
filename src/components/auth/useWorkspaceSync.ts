@@ -6,10 +6,13 @@ import { useLayerStore } from '@/stores/useLayerStore';
 import { toast } from 'sonner';
 
 /**
- * Hook to manage synchronization between Zustand stores and Supabase
+ * Hook to manage synchronization between Zustand stores and Supabase.
+ * Returns { isSyncing, isHydrated } — isHydrated becomes true once the
+ * initial load from Supabase is complete and stores are populated.
  */
 export function useWorkspaceSync(projectId: string | null) {
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isHydrated, setIsHydrated] = useState(false);
 
     // Zustand state selectors
     const csvData = useCSVStore(s => s.data);
@@ -22,16 +25,24 @@ export function useWorkspaceSync(projectId: string | null) {
 
     const layers = useLayerStore(s => s.layers);
 
+    // Reset hydration state when project changes
+    useEffect(() => {
+        setIsHydrated(false);
+    }, [projectId]);
+
     // Load project from Supabase
     useEffect(() => {
         async function loadProject() {
-            if (!projectId) return;
+            if (!projectId) {
+                setIsHydrated(true); // No project to load = immediately ready
+                return;
+            }
 
             try {
                 setIsSyncing(true);
                 const { data, error } = await supabase
                     .from('projects')
-                    .select('state')
+                    .select('state, name')
                     .eq('id', projectId)
                     .single();
 
@@ -45,6 +56,7 @@ export function useWorkspaceSync(projectId: string | null) {
                         useCSVStore.setState({
                             data: state.csv.data || [],
                             headers: state.csv.headers || [],
+                            fileName: state.csv.fileName || data.name || 'Untitled',
                             isLoaded: true,
                             readyForEditor: state.csv.readyForEditor || false
                         });
@@ -65,22 +77,23 @@ export function useWorkspaceSync(projectId: string | null) {
                         });
                     }
 
-                    toast.success('Workspace loaded successfully');
+                    toast.success('Workspace loaded');
                 }
             } catch (e) {
                 console.error('Failed to load workspace:', e);
                 toast.error('Failed to load workspace data');
             } finally {
                 setIsSyncing(false);
+                setIsHydrated(true);
             }
         }
 
         loadProject();
     }, [projectId]);
 
-    // Auto-save to Supabase
+    // Auto-save to Supabase (only after hydration is complete)
     useEffect(() => {
-        if (!projectId || !csvIsLoaded || isSyncing) return;
+        if (!projectId || !csvIsLoaded || isSyncing || !isHydrated) return;
 
         const saveState = async () => {
             try {
@@ -91,9 +104,8 @@ export function useWorkspaceSync(projectId: string | null) {
                 };
 
                 // Guard: check payload size before sending to Supabase
-                // Supabase has a ~5MB limit for single-row JSON payloads
                 const payloadSize = new Blob([JSON.stringify(fullState)]).size;
-                const MAX_PAYLOAD = 4.5 * 1024 * 1024; // 4.5 MB safety margin
+                const MAX_PAYLOAD = 4.5 * 1024 * 1024; // 4.5 MB
 
                 if (payloadSize > MAX_PAYLOAD) {
                     console.warn(
@@ -121,7 +133,7 @@ export function useWorkspaceSync(projectId: string | null) {
         const timeoutId = setTimeout(saveState, 2000);
         return () => clearTimeout(timeoutId);
 
-    }, [projectId, csvData, csvHeaders, readyForEditor, canvasConfig, outputConfig, layers, csvIsLoaded, isSyncing]);
+    }, [projectId, csvData, csvHeaders, readyForEditor, canvasConfig, outputConfig, layers, csvIsLoaded, isSyncing, isHydrated]);
 
-    return { isSyncing };
+    return { isSyncing, isHydrated };
 }

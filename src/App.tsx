@@ -36,29 +36,12 @@ function App() {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
 
   // Initialize background sync to Supabase
-  useWorkspaceSync(currentProjectId);
+  const { isHydrated } = useWorkspaceSync(currentProjectId);
   useGlobalSettingsSync();
 
   const readyForEditor = useCSVStore((s) => s.readyForEditor);
   const setCSVData = useCSVStore((s) => s.setCSVData);
   const loadStoredFonts = useFontStore((s) => s.loadStoredFonts);
-
-  // Clear stale CSV state from localStorage when on the dashboard
-  // This prevents ghost state from lingering across page refreshes
-  useEffect(() => {
-    if (showDashboard && !currentProjectId) {
-      const stored = localStorage.getItem('csv-editor-storage');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed?.state?.isLoaded) {
-            // Stale state detected — clear it
-            useCSVStore.getState().clearCSVData();
-          }
-        } catch { /* ignore parse errors */ }
-      }
-    }
-  }, [showDashboard, currentProjectId]);
 
   // Layer store for undo
   const { selectedLayerId, undo, redo, canUndo, canRedo } = useLayerStore();
@@ -69,10 +52,12 @@ function App() {
   // Load stored custom fonts on app startup
   useEffect(() => {
     loadStoredFonts();
-  }, [loadStoredFonts]);
 
-  // Remove the dangerous auto-creation useEffect
-  // Project creation is now handled explicitly by the handleCSVUpload callback
+    // One-time cleanup: remove legacy Zustand persist keys
+    ['csv-editor-storage', 'canvas-config-storage', 'layer-storage'].forEach(key => {
+      localStorage.removeItem(key);
+    });
+  }, [loadStoredFonts]);
 
   const handleCSVUpload = async (uploadData: any[], uploadHeaders: string[], uploadFileName: string) => {
     if (!user) return;
@@ -258,6 +243,17 @@ function App() {
 
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // State 1.5: Project is loading from Supabase — show spinner
+  if (!isHydrated) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background">
+        <Toaster />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+        <p className="text-sm text-muted-foreground">Loading workspace...</p>
       </div>
     );
   }

@@ -1,6 +1,6 @@
 // Multi-provider AI Service for CSV data enrichment
 // Supports: Gemini, OpenAI, Claude, DeepSeek, Groq, DeepInfra, OpenRouter, Local LLM (LM Studio)
-
+import { getSyncedItem, setSyncedItem, removeSyncedItem } from '@/lib/syncedStorage';
 export type AIProvider = 'gemini' | 'openai' | 'claude' | 'deepseek' | 'groq' | 'deepinfra' | 'openrouter' | 'local';
 
 export interface AIProviderConfig {
@@ -114,7 +114,7 @@ let providerApiKeys: PerProviderApiKeys = {};
 // Load per-provider API keys from localStorage
 function loadProviderApiKeys(): PerProviderApiKeys {
     try {
-        const saved = localStorage.getItem(API_KEYS_STORAGE_KEY);
+        const saved = getSyncedItem(API_KEYS_STORAGE_KEY);
         if (saved) {
             providerApiKeys = JSON.parse(saved);
 
@@ -128,7 +128,7 @@ function loadProviderApiKeys(): PerProviderApiKeys {
 // Save per-provider API keys to localStorage
 function saveProviderApiKeys() {
     try {
-        localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(providerApiKeys));
+        setSyncedItem(API_KEYS_STORAGE_KEY, JSON.stringify(providerApiKeys));
     } catch (e) {
         console.error('Failed to save provider API keys:', e);
     }
@@ -160,7 +160,7 @@ export interface SavedPromptTemplate {
 // Prompt template management
 export function getSavedPromptTemplates(): SavedPromptTemplate[] {
     try {
-        const saved = localStorage.getItem(TEMPLATES_STORAGE_KEY);
+        const saved = getSyncedItem(TEMPLATES_STORAGE_KEY);
         if (saved) {
             return JSON.parse(saved);
         }
@@ -180,7 +180,7 @@ export function savePromptTemplate(name: string, prompt: string): SavedPromptTem
     };
     templates.push(newTemplate);
     try {
-        localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(templates));
+        setSyncedItem(TEMPLATES_STORAGE_KEY, JSON.stringify(templates));
     } catch (e) {
         console.error('Failed to save prompt template:', e);
     }
@@ -191,7 +191,7 @@ export function deletePromptTemplate(id: string): void {
     const templates = getSavedPromptTemplates();
     const filtered = templates.filter(t => t.id !== id);
     try {
-        localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(filtered));
+        setSyncedItem(TEMPLATES_STORAGE_KEY, JSON.stringify(filtered));
     } catch (e) {
         console.error('Failed to delete prompt template:', e);
     }
@@ -202,7 +202,7 @@ export function loadAISettings(): AIProviderConfig {
     loadProviderApiKeys();
 
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = getSyncedItem(STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
             currentProvider = { ...currentProvider, ...parsed };
@@ -232,7 +232,7 @@ export function saveAISettings(config: Partial<AIProviderConfig>) {
 
     try {
         // Save general settings (without API key - that's stored per-provider now)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        setSyncedItem(STORAGE_KEY, JSON.stringify({
             provider: currentProvider.provider,
             model: currentProvider.model,
             localEndpoint: currentProvider.localEndpoint
@@ -251,8 +251,8 @@ export function clearAISettings() {
     // Clear per-provider API keys
     providerApiKeys = {};
     try {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(API_KEYS_STORAGE_KEY);
+        removeSyncedItem(STORAGE_KEY);
+        removeSyncedItem(API_KEYS_STORAGE_KEY);
     } catch (e) {
         console.error('Failed to clear AI settings:', e);
     }

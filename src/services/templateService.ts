@@ -1,4 +1,5 @@
 import type { Layer, CanvasConfig, OutputConfig } from '../types';
+import { getSyncedItem, setSyncedItem, removeSyncedItem } from '@/lib/syncedStorage';
 
 export interface Template {
     name: string;
@@ -96,7 +97,7 @@ export function clearAutoSave(): void {
  * Get saved templates list from localStorage
  */
 export function getSavedTemplates(): { name: string; savedAt: string }[] {
-    const saved = localStorage.getItem(TEMPLATES_KEY);
+    const saved = getSyncedItem(TEMPLATES_KEY);
     if (!saved) return [];
 
     try {
@@ -123,7 +124,7 @@ export function saveTemplateToStorage(template: Template): void {
         templates.push({ name: template.name, savedAt: template.createdAt });
     }
 
-    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+    setSyncedItem(TEMPLATES_KEY, JSON.stringify(templates));
 }
 
 /**
@@ -147,5 +148,5 @@ export function deleteTemplateFromStorage(name: string): void {
     localStorage.removeItem(`template_${name}`);
 
     const templates = getSavedTemplates().filter(t => t.name !== name);
-    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+    setSyncedItem(TEMPLATES_KEY, JSON.stringify(templates));
 }

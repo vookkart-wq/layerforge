@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { getSyncedItem, setSyncedItem } from '@/lib/syncedStorage';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,8 +30,8 @@ export function CloudinaryPanel() {
     const [concurrencyLimit, setConcurrencyLimit] = useState(6);
     const [filenameColumn, setFilenameColumn] = useState('__default__');
 
-    const [cloudName, setCloudName] = useState(() => localStorage.getItem('cloudinary_cloud_name') || '');
-    const [uploadPreset, setUploadPreset] = useState(() => localStorage.getItem('cloudinary_upload_preset') || '');
+    const [cloudName, setCloudName] = useState(() => getSyncedItem('cloudinary_cloud_name') || '');
+    const [uploadPreset, setUploadPreset] = useState(() => getSyncedItem('cloudinary_upload_preset') || '');
 
     const layers = useLayerStore((s) => s.layers);
     const { canvasConfig, outputConfig } = useCanvasStore();
@@ -38,11 +39,11 @@ export function CloudinaryPanel() {
 
     // Persist Cloudinary settings
     useEffect(() => {
-        localStorage.setItem('cloudinary_cloud_name', cloudName);
+        setSyncedItem('cloudinary_cloud_name', cloudName);
     }, [cloudName]);
 
     useEffect(() => {
-        localStorage.setItem('cloudinary_upload_preset', uploadPreset);
+        setSyncedItem('cloudinary_upload_preset', uploadPreset);
     }, [uploadPreset]);
 
     useEffect(() => {
