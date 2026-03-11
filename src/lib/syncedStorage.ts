@@ -62,6 +62,9 @@ export function removeSyncedItem(key: string): void {
 
 /**
  * Download all synced settings from Supabase into localStorage.
+ * Also performs a bidirectional merge: if there are local keys that
+ * aren't in the cloud yet (e.g., from before sync was implemented),
+ * push them up to Supabase.
  */
 export async function downloadSettingsFromCloud(userId: string): Promise<void> {
     try {
@@ -75,13 +78,43 @@ export async function downloadSettingsFromCloud(userId: string): Promise<void> {
             throw error;
         }
 
-        if (data?.settings) {
-            const settings = data.settings as Record<string, any>;
-            SYNCED_KEYS.forEach(key => {
-                if (settings[key]) {
-                    localStorage.setItem(key, JSON.stringify(settings[key]));
-                }
-            });
+        const cloudSettings = (data?.settings as Record<string, any>) || {};
+
+        // 1. Download: cloud → localStorage (cloud wins for existing keys)
+        SYNCED_KEYS.forEach(key => {
+            if (cloudSettings[key]) {
+                localStorage.setItem(key, JSON.stringify(cloudSettings[key]));
+            }
+        });
+
+        // 2. Upload: check if we have any local keys NOT in the cloud → push them up
+        let hasLocalOnlyKeys = false;
+        const mergedPayload: Record<string, any> = { ...cloudSettings };
+
+        SYNCED_KEYS.forEach(key => {
+            const localRaw = localStorage.getItem(key);
+            if (localRaw && !cloudSettings[key]) {
+                // Local key exists but cloud doesn't have it — migrate it
+                hasLocalOnlyKeys = true;
+                try { mergedPayload[key] = JSON.parse(localRaw); } catch { mergedPayload[key] = localRaw; }
+            }
+        });
+
+        if (hasLocalOnlyKeys) {
+            // Push the merged settings back to the cloud
+            const { error: upsertError } = await supabase
+                .from('user_settings')
+                .upsert({
+                    user_id: userId,
+                    settings: mergedPayload,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (upsertError) {
+                console.error('Failed to migrate local settings to cloud:', upsertError);
+            } else {
+                console.log('Migrated local-only settings to cloud');
+            }
         }
     } catch (e) {
         console.error('Failed to load global settings from cloud:', e);
