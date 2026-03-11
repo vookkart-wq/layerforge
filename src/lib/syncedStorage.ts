@@ -82,8 +82,11 @@ export async function downloadSettingsFromCloud(userId: string): Promise<void> {
 
         // 1. Download: cloud → localStorage (cloud wins for existing keys)
         SYNCED_KEYS.forEach(key => {
-            if (cloudSettings[key]) {
-                localStorage.setItem(key, JSON.stringify(cloudSettings[key]));
+            if (cloudSettings[key] !== undefined && cloudSettings[key] !== null) {
+                // If the value is already a string, store it directly.
+                // Only JSON.stringify objects/arrays to avoid double-quoting.
+                const val = cloudSettings[key];
+                localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
             }
         });
 
