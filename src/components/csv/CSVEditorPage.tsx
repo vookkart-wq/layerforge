@@ -48,6 +48,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useGridSelection } from './hooks/useGridSelection';
 import { useGridEditing } from './hooks/useGridEditing';
 import { useGridFill } from './hooks/useGridFill';
+import { useGridClipboard } from './hooks/useGridClipboard';
 import { GridCell } from './GridCell';
 
 // Selection types
@@ -241,6 +242,18 @@ export function CSVEditorPage({ onReturnToDashboard }: { onReturnToDashboard?: (
         processedData,
         visibleHeaders,
         updateCells,
+        tableContainerRef
+    });
+
+    useGridClipboard({
+        processedData,
+        headers: visibleHeaders,
+        selection,
+        selectedCells,
+        selectedRows,
+        selectedColumns,
+        editingCell,
+        updateCell,
         tableContainerRef
     });
 
