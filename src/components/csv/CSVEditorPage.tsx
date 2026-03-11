@@ -253,7 +253,8 @@ export function CSVEditorPage({ onReturnToDashboard }: { onReturnToDashboard?: (
         selectedRows,
         selectedColumns,
         editingCell,
-        updateCell,
+        updateCells,
+        addColumn,
         tableContainerRef
     });
 

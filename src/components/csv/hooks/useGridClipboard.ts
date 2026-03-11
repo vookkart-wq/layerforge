@@ -13,14 +13,16 @@ interface UseGridClipboardProps {
     selectedRows: Set<number>;
     selectedColumns: Set<string>;
     editingCell: { row: number; col: number } | null;
-    updateCell: (rowIndex: number, header: string, value: string) => void;
+    updateCells: (updates: { rowIndex: number; header: string; value: string }[]) => void;
+    addColumn: (name: string, defaultValue?: string) => void;
     tableContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
- * Hook that adds Ctrl+C (copy) and Ctrl+V (paste) support to the CSV grid.
+ * Hook that adds Ctrl+C (copy), Ctrl+X (cut), and Ctrl+V (paste) support to the CSV grid.
  * Works on selected cells, rows, columns, or ranges.
  * Copies as TSV (tab-separated) so it's compatible with Excel/Google Sheets.
+ * All operations use batch updateCells for single-step undo (Ctrl+Z undoes the whole paste).
  */
 export function useGridClipboard({
     processedData,
@@ -30,7 +32,8 @@ export function useGridClipboard({
     selectedRows,
     selectedColumns,
     editingCell,
-    updateCell,
+    updateCells,
+    addColumn,
     tableContainerRef
 }: UseGridClipboardProps) {
 
@@ -88,10 +91,10 @@ export function useGridClipboard({
         return positions;
     }, [selection, selectedCells, selectedRows, selectedColumns, processedData, headers]);
 
-    // Copy: build TSV from selected cells
-    const handleCopy = useCallback(async () => {
+    // Build TSV text from selected cells
+    const buildTSVFromSelection = useCallback((): string => {
         const positions = getSelectedPositions();
-        if (positions.length === 0) return;
+        if (positions.length === 0) return '';
 
         // Find the bounding box of selected cells
         const rows = [...new Set(positions.map(p => p.row))].sort((a, b) => a - b);
@@ -113,14 +116,17 @@ export function useGridClipboard({
             lines.push(cells.join('\t'));
         }
 
-        const tsv = lines.join('\n');
+        return lines.join('\n');
+    }, [getSelectedPositions, processedData, headers]);
 
+    // Write text to clipboard
+    const writeToClipboard = useCallback(async (text: string) => {
         try {
-            await navigator.clipboard.writeText(tsv);
+            await navigator.clipboard.writeText(text);
         } catch {
             // Fallback for older browsers
             const textarea = document.createElement('textarea');
-            textarea.value = tsv;
+            textarea.value = text;
             textarea.style.position = 'fixed';
             textarea.style.opacity = '0';
             document.body.appendChild(textarea);
@@ -128,9 +134,39 @@ export function useGridClipboard({
             document.execCommand('copy');
             document.body.removeChild(textarea);
         }
-    }, [getSelectedPositions, processedData, headers]);
+    }, []);
 
-    // Paste: read TSV from clipboard and write to cells starting from selection
+    // Copy: build TSV from selected cells
+    const handleCopy = useCallback(async () => {
+        const text = buildTSVFromSelection();
+        if (text) await writeToClipboard(text);
+    }, [buildTSVFromSelection, writeToClipboard]);
+
+    // Cut: copy + clear source cells in one batch
+    const handleCut = useCallback(async () => {
+        const text = buildTSVFromSelection();
+        if (!text) return;
+
+        await writeToClipboard(text);
+
+        // Clear all selected cells in a single batch (one Ctrl+Z to undo)
+        const positions = getSelectedPositions();
+        const updates: { rowIndex: number; header: string; value: string }[] = [];
+
+        for (const pos of positions) {
+            const row = processedData[pos.row];
+            const header = headers[pos.col];
+            if (row && header) {
+                updates.push({ rowIndex: row.__idx, header, value: '' });
+            }
+        }
+
+        if (updates.length > 0) {
+            updateCells(updates);
+        }
+    }, [buildTSVFromSelection, writeToClipboard, getSelectedPositions, processedData, headers, updateCells]);
+
+    // Paste: read TSV from clipboard, auto-extend columns if needed, batch update
     const handlePaste = useCallback(async () => {
         let text = '';
         try {
@@ -149,7 +185,6 @@ export function useGridClipboard({
             startRow = Math.min(selection.start.row, selection.end.row);
             startCol = Math.min(selection.start.col, selection.end.col);
         } else {
-            // Try individual cells
             const positions = getSelectedPositions();
             if (positions.length > 0) {
                 startRow = Math.min(...positions.map(p => p.row));
@@ -159,27 +194,63 @@ export function useGridClipboard({
 
         // Parse TSV/CSV from clipboard
         const lines = text.split(/\r?\n/).filter(line => line.length > 0);
+        if (lines.length === 0) return;
 
-        for (let rOffset = 0; rOffset < lines.length; rOffset++) {
-            const cells = lines[rOffset].split('\t');
-            const targetVisualRow = startRow + rOffset;
+        // Determine the max number of columns in the pasted data
+        const pastedCols = Math.max(...lines.map(line => line.split('\t').length));
+        const neededCols = startCol + pastedCols;
 
-            if (targetVisualRow >= processedData.length) break;
-
-            const targetRow = processedData[targetVisualRow];
-            if (!targetRow) continue;
-
-            for (let cOffset = 0; cOffset < cells.length; cOffset++) {
-                const targetCol = startCol + cOffset;
-                if (targetCol >= headers.length) break;
-
-                const header = headers[targetCol];
-                if (header) {
-                    updateCell(targetRow.__idx, header, cells[cOffset]);
-                }
+        // Auto-extend columns if paste data is wider than the grid
+        if (neededCols > headers.length) {
+            const columnsToAdd = neededCols - headers.length;
+            for (let i = 0; i < columnsToAdd; i++) {
+                addColumn(`Column_${headers.length + i + 1}`);
             }
         }
-    }, [selection, getSelectedPositions, processedData, headers, updateCell]);
+
+        // Get the current headers (may have been extended)
+        // We need to re-read since addColumn modifies the store
+        // Use a small delay to let the store update, then batch the cell updates
+        // Actually, addColumn is synchronous in Zustand, so we can proceed
+        // But we need to get the latest headers after adding columns
+        setTimeout(() => {
+            // Re-read headers from the store (they may have been extended)
+            const currentHeaders = headers.length >= neededCols
+                ? headers
+                : [...headers, ...Array.from({ length: neededCols - headers.length }, (_, i) => `Column_${headers.length + i + 1}`)];
+
+            // Build all updates as a single batch
+            const updates: { rowIndex: number; header: string; value: string }[] = [];
+
+            for (let rOffset = 0; rOffset < lines.length; rOffset++) {
+                const cells = lines[rOffset].split('\t');
+                const targetVisualRow = startRow + rOffset;
+
+                if (targetVisualRow >= processedData.length) break;
+
+                const targetRow = processedData[targetVisualRow];
+                if (!targetRow) continue;
+
+                for (let cOffset = 0; cOffset < cells.length; cOffset++) {
+                    const targetCol = startCol + cOffset;
+                    if (targetCol >= currentHeaders.length) break;
+
+                    const header = currentHeaders[targetCol];
+                    if (header) {
+                        updates.push({
+                            rowIndex: targetRow.__idx,
+                            header,
+                            value: cells[cOffset]
+                        });
+                    }
+                }
+            }
+
+            if (updates.length > 0) {
+                updateCells(updates);
+            }
+        }, 0);
+    }, [selection, getSelectedPositions, processedData, headers, updateCells, addColumn]);
 
     // Listen for keyboard events
     useEffect(() => {
@@ -195,6 +266,9 @@ export function useGridClipboard({
                 if (e.key === 'c' || e.key === 'C') {
                     e.preventDefault();
                     handleCopy();
+                } else if (e.key === 'x' || e.key === 'X') {
+                    e.preventDefault();
+                    handleCut();
                 } else if (e.key === 'v' || e.key === 'V') {
                     e.preventDefault();
                     handlePaste();
@@ -204,7 +278,7 @@ export function useGridClipboard({
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [editingCell, handleCopy, handlePaste]);
+    }, [editingCell, handleCopy, handleCut, handlePaste]);
 
-    return { handleCopy, handlePaste };
+    return { handleCopy, handleCut, handlePaste };
 }
